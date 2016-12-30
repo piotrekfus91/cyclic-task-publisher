@@ -2,7 +2,7 @@ package com.github.ctp.util
 
 import scala.io.Source
 
-object FileReader {
+class FileHelper {
   def read(filePath: String): String = {
     Source.fromFile(filePath).getLines.mkString("\n")
   }
