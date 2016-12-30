@@ -23,13 +23,13 @@ class YamlConfigReaderTest extends FlatSpec with Matchers {
       ),
       Map(
         ("piotrek", UserData(
-          Some(TodoistUser(enabled = true, Some("123456")))
+          "piotrek", Some(TodoistUser(enabled = true, Some("123456")))
         )),
         ("zenobiusz", UserData(
-          None
+          "zenobiusz", None
         )),
         ("frydwulfa", UserData(
-          Some(TodoistUser(enabled = false))
+          "frydwulfa", Some(TodoistUser(enabled = false))
         ))
       )
     )

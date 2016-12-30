@@ -10,7 +10,6 @@ users:
       enabled: true
       apiToken: "123456"
   zenobiusz:
-    todoist: # TODO remove when second provider added
   frydwulfa:
     todoist:
       enabled: false
