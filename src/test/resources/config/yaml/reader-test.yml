@@ -1,7 +1,16 @@
 ---
 allTasks:
-  usersTasks:
-    piotrek:
-      tasks:
-      - description: "description one"
-      - description: "description two"
+  piotrek:
+    tasks:
+    - description: "description one"
+    - description: "description two"
+users:
+  piotrek:
+    todoist:
+      enabled: true
+      apiToken: "123456"
+  zenobiusz:
+    todoist: # TODO remove when second provider added
+  frydwulfa:
+    todoist:
+      enabled: false
