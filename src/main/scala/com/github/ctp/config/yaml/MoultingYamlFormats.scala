@@ -4,7 +4,7 @@ import com.github.ctp.domain._
 import net.jcazevedo.moultingyaml._
 
 object MoultingYamlFormats extends DefaultYamlProtocol {
-  implicit val taskFormat = yamlFormat1(Task)
+  implicit val taskFormat = yamlFormat2(Task)
   implicit val userTasksFormat = yamlFormat1(UserTasks)
   implicit val todoistUserFormat = yamlFormat2(TodoistUser)
   implicit object UserDataFormat extends YamlFormat[UserData] {

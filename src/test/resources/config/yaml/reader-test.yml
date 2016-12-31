@@ -3,7 +3,9 @@ allTasks:
   piotrek:
     tasks:
     - description: "description one"
+      project: "test project"
     - description: "description two"
+      project: "test project"
 users:
   piotrek:
     todoist:
