@@ -3,7 +3,7 @@ package com.github.ctp.publisher.todoist
 import akka.actor.Actor
 import com.github.ctp.domain.{Task, UserData}
 import com.github.ctp.logger.CtpLogger
-import com.github.ctp.publisher.task.Publish
+import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}

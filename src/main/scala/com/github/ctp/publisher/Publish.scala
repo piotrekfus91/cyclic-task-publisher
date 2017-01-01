@@ -1,4 +1,4 @@
-package com.github.ctp.publisher.task
+package com.github.ctp.publisher
 
 import com.github.ctp.domain.{Task, UserData}
 

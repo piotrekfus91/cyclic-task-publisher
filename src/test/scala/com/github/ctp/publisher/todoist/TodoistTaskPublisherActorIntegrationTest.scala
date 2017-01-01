@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.macwire.TodoistPublisherModule
-import com.github.ctp.publisher.task.Publish
+import com.github.ctp.publisher.Publish
 import com.github.ctp.test.TodoistIntegrationTestContext._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 

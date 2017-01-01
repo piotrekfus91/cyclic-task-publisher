@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorSystem, Props}
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.logger.CtpLogger
-import com.github.ctp.publisher.task.Publish
+import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.Project
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
@@ -44,9 +44,9 @@ class TodoistTaskPublisherActorTest extends FlatSpec with MockFactory {
 
     sut ! Publish(userData, Task("desc", "test project"))
 
-    Thread.sleep(50)
+    Thread.sleep(100)
 
     actorSystem.terminate()
-    Await.result(actorSystem.whenTerminated, Duration(50, TimeUnit.MILLISECONDS))
+    Await.result(actorSystem.whenTerminated, Duration(100, TimeUnit.MILLISECONDS))
   }
 }
