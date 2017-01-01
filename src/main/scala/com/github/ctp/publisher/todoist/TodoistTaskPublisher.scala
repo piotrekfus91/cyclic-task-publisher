@@ -1,6 +1,7 @@
 package com.github.ctp.publisher.todoist
 
 import com.github.ctp.domain.{Task, UserData}
+import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.TaskPublisher
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
@@ -11,7 +12,8 @@ import spray.json._
 
 class TodoistTaskPublisher(private val projectListManager: ProjectListManager,
                            private val httpRunner: HttpRunner,
-                           private val uuidGenerator: UuidGenerator) extends TaskPublisher with LazyLogging {
+                           private val uuidGenerator: UuidGenerator,
+                           private val ctpLogger: CtpLogger) extends TaskPublisher with LazyLogging {
 
   override def publish(userData: UserData, task: Task): Unit = {
     logger.info(s"publishing $task for ${userData.name}")
@@ -31,9 +33,10 @@ class TodoistTaskPublisher(private val projectListManager: ProjectListManager,
     )
 
     val json = commands.toJson.prettyPrint
-    httpRunner.publishTask(userData, json) match {
-      case Right(unused) => logger.info(s"task ${task.description} of user ${userData.name} published")
-      case Left(unused) => logger.error(s"task ${task.description} of user ${userData.name} not published")
+    val msg = httpRunner.publishTask(userData, json) match {
+      case Right(unused) => s"task ${task.description} of user ${userData.name} published"
+      case Left(unused) => s"task ${task.description} of user ${userData.name} not published"
     }
+    ctpLogger.log(msg)
   }
 }

@@ -1,6 +1,7 @@
 package com.github.ctp.publisher.todoist
 
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
+import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.todoist.dto.Project
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
@@ -15,6 +16,7 @@ class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
     val httpRunner = mock[HttpRunner]
     val uuidGenerator = stub[UuidGenerator]
     val projectListManager = stub[ProjectListManager]
+    val ctpLogger = stub[CtpLogger]
 
     projectListManager.getUserProjectByName _ when(userData, "test project") returns Some(Project("test project", 123456L))
     (uuidGenerator.uuid _).when().returns(uuid)
@@ -29,7 +31,7 @@ class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
         |  }
         |}]""".stripMargin).returns(Right())
 
-    val sut = new TodoistTaskPublisher(projectListManager, httpRunner, uuidGenerator)
+    val sut = new TodoistTaskPublisher(projectListManager, httpRunner, uuidGenerator, ctpLogger)
 
     sut.publish(userData, Task("desc", "test project"))
 

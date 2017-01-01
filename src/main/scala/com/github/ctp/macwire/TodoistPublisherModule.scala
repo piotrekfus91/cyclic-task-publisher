@@ -4,7 +4,7 @@ import com.github.ctp.publisher.todoist.TodoistTaskPublisher
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListFetcher, ProjectListManagerImpl}
 import com.softwaremill.macwire._
 
-trait TodoistPublisherModule extends UtilModule {
+trait TodoistPublisherModule extends UtilModule with LoggerModule {
   lazy val httpRunner = wire[HttpRunner]
   lazy val projectListFetcher = wire[ProjectListFetcher]
   lazy val projectListManager = wire[ProjectListManagerImpl]
