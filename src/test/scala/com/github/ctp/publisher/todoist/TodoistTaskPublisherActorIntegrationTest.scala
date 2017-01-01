@@ -2,15 +2,19 @@ package com.github.ctp.publisher.todoist
 
 import java.util.UUID
 
+import akka.actor.ActorSystem
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.macwire.TodoistPublisherModule
+import com.github.ctp.publisher.task.Publish
 import com.github.ctp.test.TodoistIntegrationTestContext._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-class TodoistTaskPublisherIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
-  val modules = new TodoistPublisherModule {}
+class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
+  val modules = new TodoistPublisherModule {
+    override def actorSystem: ActorSystem = ActorSystem("test")
+  }
   val projectListManager = modules.projectListManager
-  val todoistTaskPublisher = modules.todoistTaskPublisher
+  val todoistTaskPublisher = modules.todoistTaskPublisher()
 
   val userData = UserData("user", Some(TodoistUser(enabled = true, apiToken = Some(todoistApiToken.getOrElse("")))))
   val taskName = UUID.randomUUID().toString
@@ -28,7 +32,9 @@ class TodoistTaskPublisherIntegrationTest extends FlatSpec with Matchers with Be
   }
 
   it should "create task in real Todoist" in {
-    todoistTaskPublisher.publish(userData, task)
+    todoistTaskPublisher ! Publish(userData, task)
+
+    modules.actorSystem.stop(todoistTaskPublisher)
 
     getAllTasks should include(taskName)
   }

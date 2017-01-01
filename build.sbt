@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "org.scalaj" % "scalaj-http_2.12" % "2.3.0",
   "io.spray" %%  "spray-json" % "1.3.3",
+  "com.typesafe.akka" % "akka-actor_2.12" % "2.4.16",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test"
 )

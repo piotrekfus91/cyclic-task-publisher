@@ -1,14 +1,21 @@
 package com.github.ctp.publisher.todoist
 
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{ActorSystem, Props}
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.logger.CtpLogger
+import com.github.ctp.publisher.task.Publish
 import com.github.ctp.publisher.todoist.dto.Project
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FlatSpec
 
-class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+
+class TodoistTaskPublisherActorTest extends FlatSpec with MockFactory {
   "Todoist task publisher" should "build correct JSON" in {
     val uuid = "c1c8d910-cf92-11e6-bf26-cec0c932ce01"
     val userData = UserData("userName", Some(TodoistUser(enabled = true, Some("12345678"))))
@@ -31,9 +38,15 @@ class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
         |  }
         |}]""".stripMargin).returns(Right())
 
-    val sut = new TodoistTaskPublisher(projectListManager, httpRunner, uuidGenerator, ctpLogger)
+    val actorSystem = ActorSystem("test")
 
-    sut.publish(userData, Task("desc", "test project"))
+    val sut = actorSystem.actorOf(Props(new TodoistTaskPublisherActor(projectListManager, httpRunner, uuidGenerator, ctpLogger)))
 
+    sut ! Publish(userData, Task("desc", "test project"))
+
+    Thread.sleep(50)
+
+    actorSystem.terminate()
+    Await.result(actorSystem.whenTerminated, Duration(50, TimeUnit.MILLISECONDS))
   }
 }
