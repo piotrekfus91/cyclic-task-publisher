@@ -24,16 +24,16 @@ class TodoistTaskPublisher(private val projectListManager: ProjectListManager,
     val commands = List(
       Command(
         commandType = "item_add",
-        temp_id = uuidGenerator.uuid(),
+        tempId = uuidGenerator.uuid(),
         uuid = uuidGenerator.uuid(),
-        args = TodoistTask(task.description, project.id)
+        todoistTask = TodoistTask(task.description, project.id)
       )
     )
 
     val json = commands.toJson.prettyPrint
     httpRunner.publishTask(userData, json) match {
-      case Right => logger.info(s"task ${task.description} of user ${userData.name} published")
-      case Left => logger.error(s"task ${task.description} of user ${userData.name} not published")
+      case Right(unused) => logger.info(s"task ${task.description} of user ${userData.name} published")
+      case Left(unused) => logger.error(s"task ${task.description} of user ${userData.name} not published")
     }
   }
 }

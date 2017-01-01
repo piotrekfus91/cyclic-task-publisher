@@ -20,14 +20,14 @@ class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
     (uuidGenerator.uuid _).when().returns(uuid)
     (httpRunner.publishTask _).expects(userData,
       """[{
-        |  "commandType": "item_add",
+        |  "type": "item_add",
         |  "temp_id": "c1c8d910-cf92-11e6-bf26-cec0c932ce01",
         |  "uuid": "c1c8d910-cf92-11e6-bf26-cec0c932ce01",
         |  "args": {
         |    "content": "desc",
         |    "project_id": 123456
         |  }
-        |}]""".stripMargin).returns(Right)
+        |}]""".stripMargin).returns(Right())
 
     val sut = new TodoistTaskPublisher(projectListManager, httpRunner, uuidGenerator)
 
