@@ -12,3 +12,5 @@ class StateSerializer extends Actor with LazyLogging {
       sender ! SerializedState(stateString)
   }
 }
+
+trait StateSerializer
