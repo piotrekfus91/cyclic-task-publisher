@@ -2,9 +2,10 @@ package com.github.ctp.publisher.todoist.service
 
 import com.github.ctp.domain.UserData
 import com.github.ctp.publisher.todoist.dto.Project
+import com.google.inject.Inject
 import com.typesafe.scalalogging.LazyLogging
 
-class ProjectListManagerImpl(private val projectListFetcher: ProjectListFetcher) extends LazyLogging with ProjectListManager {
+class ProjectListManagerImpl @Inject() (private val projectListFetcher: ProjectListFetcher) extends LazyLogging with ProjectListManager {
   private var userProjects = Map[String, List[Project]]()
 
   def refreshUserProjects(userData: UserData) = {

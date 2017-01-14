@@ -4,17 +4,25 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import com.github.ctp.domain.{Task, TodoistUser, UserData}
-import com.github.ctp.macwire.TodoistPublisherModule
+import com.github.ctp.guice._
 import com.github.ctp.publisher.Publish
+import com.github.ctp.publisher.todoist.service.ProjectListManager
 import com.github.ctp.test.TodoistIntegrationTestContext._
+import com.google.inject.Guice
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
-  val modules = new TodoistPublisherModule {
-    override def actorSystem: ActorSystem = ActorSystem("test")
-  }
-  val projectListManager = modules.projectListManager
-  val todoistTaskPublisher = modules.todoistTaskPublisher()
+class TodoistTaskPublisherIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
+  val guice = Guice.createInjector(
+    new AkkaModule,
+    new LoggerModule,
+    new ConfigModule,
+    new TodoistPublisherModule
+  )
+
+  val actorSystem = guice.getInstance(classOf[ActorSystem])
+
+  val projectListManager = guice.getInstance(classOf[ProjectListManager])
+  val todoistTaskPublisher = actorSystem.actorOf(GuiceAkkaExtension(actorSystem).props(TodoistTaskPublisher.actorName))
 
   val userData = UserData("user", Some(TodoistUser(enabled = true, apiToken = Some(todoistApiToken.getOrElse("")))))
   val taskName = UUID.randomUUID().toString
@@ -34,10 +42,14 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
   it should "create task in real Todoist" in {
     todoistTaskPublisher ! Publish(userData, task)
 
-    modules.actorSystem.stop(todoistTaskPublisher)
+    actorSystem.stop(todoistTaskPublisher)
 
     getAllTasks should include(taskName)
   }
 
-  override protected def afterEach(): Unit = deleteTestProject()
+  override protected def afterEach(): Unit = {
+    assume(todoistAvailable)
+
+    deleteTestProject()
+  }
 }

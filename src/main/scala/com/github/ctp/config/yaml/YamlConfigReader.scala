@@ -4,14 +4,15 @@ import com.github.ctp.config.ConfigReader
 import com.github.ctp.config.yaml.MoultingYamlFormats._
 import com.github.ctp.domain.{Config, UserData}
 import com.github.ctp.util.FileHelper
-import com.softwaremill.tagging._
+import com.google.inject.Inject
+import com.google.inject.name.Named
 import com.typesafe.scalalogging.LazyLogging
 import net.jcazevedo.moultingyaml._
 
-class YamlConfigReader(
+class YamlConfigReader @Inject() (
                         private val fileReader: FileHelper,
-                        private val filePath: String @@ YamlConfigFilePath,
-                        private val isRelative: Boolean @@ YamlConfigIsRelative)
+                        @Named("yamlConfigFilePath") private val filePath: String,
+                        @Named("yamlConfigIsRelative") private val isRelative: Boolean)
     extends ConfigReader with LazyLogging {
 
   override def read(): Config = {
@@ -34,6 +35,3 @@ class YamlConfigReader(
     }
   }
 }
-
-trait YamlConfigFilePath
-trait YamlConfigIsRelative
