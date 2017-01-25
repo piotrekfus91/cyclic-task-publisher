@@ -10,4 +10,10 @@ class FileHelperTest extends FlatSpec with Matchers {
                                    |    tabs
                                    |ends here""".stripMargin
   }
+
+  it should "return empty string if file not exists" in {
+    val sut = new FileHelper
+    val filePath = "not existing"
+    sut.read(filePath) shouldBe ""
+  }
 }

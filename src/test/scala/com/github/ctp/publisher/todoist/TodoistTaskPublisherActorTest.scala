@@ -15,7 +15,7 @@ import org.scalatest.FlatSpec
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
+class TodoistTaskPublisherActorTest extends FlatSpec with MockFactory {
   "Todoist task publisher" should "build correct JSON" in {
     val uuid = "c1c8d910-cf92-11e6-bf26-cec0c932ce01"
     val userData = UserData("userName", Some(TodoistUser(enabled = true, Some("12345678"))))
@@ -40,7 +40,7 @@ class TodoistTaskPublisherTest extends FlatSpec with MockFactory {
 
     val actorSystem = ActorSystem("test")
 
-    val sut = actorSystem.actorOf(Props(new TodoistTaskPublisher(projectListManager, httpRunner, uuidGenerator, ctpLogger)))
+    val sut = actorSystem.actorOf(Props(new TodoistTaskPublisherActor(projectListManager, httpRunner, uuidGenerator, ctpLogger)))
 
     sut ! Publish(userData, Task("desc", "test project"))
 

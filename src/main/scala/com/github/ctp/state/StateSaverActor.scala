@@ -1,13 +1,15 @@
 package com.github.ctp.state
 
 import akka.actor.{Actor, ActorRef}
-import com.github.ctp.state.dto.State
+import com.github.ctp.state.dto.{State, StateTask}
 import com.github.ctp.util.FileHelper
-import com.softwaremill.tagging.@@
+import com.google.inject.BindingAnnotation
 
-class StateSaverActor(private val fileHelper: FileHelper, private val filePath: String @@ StateFilePath,
-                      stateSerializer: ActorRef @@ StateSerializer) extends Actor {
-  private var state: Option[State] = None
+import scala.annotation.StaticAnnotation
+
+class StateSaverActor(@StateSerializer private val stateSerializer: ActorRef, private val fileHelper: FileHelper,
+                      private val filePath: String) extends Actor {
+  private var state: State = State(List())
 
   override def preStart(): Unit = {
     super.preStart()
@@ -15,14 +17,21 @@ class StateSaverActor(private val fileHelper: FileHelper, private val filePath: 
   }
 
   override def receive: Receive = {
-    case state: State =>
-      this.state = Some(state)
+    case newState: State =>
+      state = newState
     case Flush =>
-      stateSerializer ! State
+      stateSerializer ! state
     case SerializedState(stateStr) =>
       fileHelper.write(stateStr, filePath)
+    case stateTask: StateTask =>
+      state.tasks.find(it => it.user == stateTask.user && it.description == stateTask.description) match {
+        case None => state = state.copy(tasks = state.tasks :+ stateTask)
+        case Some(existingStateTask) => existingStateTask.last = existingStateTask.last ++ stateTask.last
+      }
+
+
   }
 }
 
-trait StateSaver
-trait StateFilePath
+@BindingAnnotation
+class StateSaver extends StaticAnnotation

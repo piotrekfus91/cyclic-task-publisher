@@ -11,7 +11,7 @@ import com.github.ctp.test.TodoistIntegrationTestContext._
 import com.google.inject.Guice
 import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
 
-class TodoistTaskPublisherIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
+class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
   val guice = Guice.createInjector(
     new AkkaModule,
     new LoggerModule,
@@ -22,7 +22,7 @@ class TodoistTaskPublisherIntegrationTest extends FlatSpec with Matchers with Be
   val actorSystem = guice.getInstance(classOf[ActorSystem])
 
   val projectListManager = guice.getInstance(classOf[ProjectListManager])
-  val todoistTaskPublisher = actorSystem.actorOf(GuiceAkkaExtension(actorSystem).props(TodoistTaskPublisher.actorName))
+  val todoistTaskPublisher = actorSystem.actorOf(GuiceAkkaExtension(actorSystem).props(ActorName[TodoistTaskPublisher]))
 
   val userData = UserData("user", Some(TodoistUser(enabled = true, apiToken = Some(todoistApiToken.getOrElse("")))))
   val taskName = UUID.randomUUID().toString

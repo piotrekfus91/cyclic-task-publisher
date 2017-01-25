@@ -1,9 +1,11 @@
 package com.github.ctp.guice
 
 import akka.actor.{Actor, ActorRef, ActorSystem, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider, IndirectActorProducer, Props}
-import com.google.inject.name.Names
 import com.google.inject._
+import com.google.inject.name.Names
 import net.codingwell.scalaguice.ScalaModule
+
+import scala.reflect._
 
 class AkkaModule extends AbstractModule with ScalaModule {
   override def configure(): Unit = {
@@ -33,11 +35,6 @@ object GuiceAkkaExtension extends ExtensionId[GuiceAkkaExtensionImpl] with Exten
   override def lookup() = GuiceAkkaExtension
   override def createExtension(system: ExtendedActorSystem) = new GuiceAkkaExtensionImpl
   override def get(system: ActorSystem): GuiceAkkaExtensionImpl = super.get(system)
-
-}
-
-trait NamedActor {
-  def actorName: String = getClass.getSimpleName
 }
 
 trait GuiceAkkaActorRefProvider {
@@ -48,4 +45,8 @@ trait GuiceAkkaActorRefProvider {
 class GuiceActorProducer(val injector: Injector, val actorName: String) extends IndirectActorProducer {
   override def actorClass = classOf[Actor]
   override def produce() = injector.getBinding(Key.get(classOf[Actor], Names.named(actorName))).getProvider.get()
+}
+
+object ActorName {
+  def apply[T: ClassTag]: String = s"${classTag[T].runtimeClass.getSimpleName}Actor"
 }

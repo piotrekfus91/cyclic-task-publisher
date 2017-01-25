@@ -1,6 +1,6 @@
 package com.github.ctp.util
 
-import java.io.PrintWriter
+import java.io.{FileNotFoundException, PrintWriter}
 
 import scala.io.Source
 
@@ -13,6 +13,10 @@ class FileHelper {
   }
 
   def read(filePath: String): String = {
-    Source.fromFile(filePath).getLines.mkString("\n")
+    try {
+      Source.fromFile(filePath).getLines.mkString("\n")
+    } catch {
+      case _: FileNotFoundException => ""
+    }
   }
 }

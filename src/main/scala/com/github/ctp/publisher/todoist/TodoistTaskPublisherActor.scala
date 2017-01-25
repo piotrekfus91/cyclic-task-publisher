@@ -2,21 +2,22 @@ package com.github.ctp.publisher.todoist
 
 import akka.actor.Actor
 import com.github.ctp.domain.{Task, UserData}
-import com.github.ctp.guice.NamedActor
 import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
 import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
-import com.google.inject.Inject
+import com.google.inject.{BindingAnnotation, Inject}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json._
 
-class TodoistTaskPublisher @Inject()(private val projectListManager: ProjectListManager,
-                                     private val httpRunner: HttpRunner,
-                                     private val uuidGenerator: UuidGenerator,
-                                     private val ctpLogger: CtpLogger) extends Actor with LazyLogging {
+import scala.annotation.StaticAnnotation
+
+class TodoistTaskPublisherActor @Inject()(private val projectListManager: ProjectListManager,
+                                          private val httpRunner: HttpRunner,
+                                          private val uuidGenerator: UuidGenerator,
+                                          private val ctpLogger: CtpLogger) extends Actor with LazyLogging {
 
   override def receive: Receive = {
     case Publish(userData, task) => publish(userData, task)
@@ -41,11 +42,12 @@ class TodoistTaskPublisher @Inject()(private val projectListManager: ProjectList
 
     val json = commands.toJson.prettyPrint
     val msg = httpRunner.publishTask(userData, json) match {
-      case Right(unused) => s"task ${task.description} of user ${userData.name} published"
-      case Left(unused) => s"task ${task.description} of user ${userData.name} not published"
+      case Right(_) => s"task ${task.description} of user ${userData.name} published"
+      case Left(_) => s"task ${task.description} of user ${userData.name} not published"
     }
     ctpLogger.log(msg)
   }
 }
 
-object TodoistTaskPublisher extends NamedActor
+@BindingAnnotation
+class TodoistTaskPublisher extends StaticAnnotation
