@@ -1,8 +1,10 @@
 package com.github.ctp.util
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class FileHelperTest extends FlatSpec with Matchers {
+import scala.io.Source
+
+class FileHelperTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   "A file reader" should "read file" in {
     val sut = new FileHelper
     val filePath = getClass.getResource("/util/reader-test.txt").getPath
@@ -15,5 +17,12 @@ class FileHelperTest extends FlatSpec with Matchers {
     val sut = new FileHelper
     val filePath = "not existing"
     sut.read(filePath) shouldBe ""
+  }
+
+  it should "write file content" in {
+    val sut = new FileHelper
+    sut.write("test file", "/tmp/ctptestfile")
+
+    Source.fromFile("/tmp/ctptestfile").getLines.mkString("") shouldBe "test file"
   }
 }

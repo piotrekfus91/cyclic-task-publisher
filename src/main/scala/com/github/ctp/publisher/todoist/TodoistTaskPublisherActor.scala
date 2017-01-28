@@ -6,7 +6,7 @@ import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
-import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
+import com.github.ctp.publisher.todoist.service.{TodoistHttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
 import com.google.inject.{BindingAnnotation, Inject}
 import com.typesafe.scalalogging.LazyLogging
@@ -15,7 +15,7 @@ import spray.json._
 import scala.annotation.StaticAnnotation
 
 class TodoistTaskPublisherActor @Inject()(private val projectListManager: ProjectListManager,
-                                          private val httpRunner: HttpRunner,
+                                          private val httpRunner: TodoistHttpRunner,
                                           private val uuidGenerator: UuidGenerator,
                                           private val ctpLogger: CtpLogger) extends Actor with LazyLogging {
 

@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scalaj.http.Http
 
-class HttpRunner extends LazyLogging {
+class TodoistHttpRunner extends LazyLogging {
   def publishTask(userData: UserData, commands: String): Either[Unit, Unit] = {
     val response = basicRequest(userData.todoist.map(_.apiToken.get).get)
       .param("commands", commands)

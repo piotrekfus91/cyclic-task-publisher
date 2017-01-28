@@ -7,7 +7,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class ProjectListFetcherTest extends FlatSpec with MockFactory with Matchers {
   "A project list fetcher" should "convert response from JSON to objects" in {
-    val httpRunner = stub[HttpRunner]
+    val httpRunner = stub[TodoistHttpRunner]
     val userData = UserData("test", Some(TodoistUser(enabled = true, Some("12345678"))))
     (httpRunner.getProjects _).when(userData).returns(
       """
@@ -53,7 +53,7 @@ class ProjectListFetcherTest extends FlatSpec with MockFactory with Matchers {
   }
 
   it should "work if no projects is returned" in {
-    val httpRunner = stub[HttpRunner]
+    val httpRunner = stub[TodoistHttpRunner]
     val userData = UserData("test", Some(TodoistUser(enabled = true, Some("12345678"))))
     (httpRunner.getProjects _).when(userData).returns(
       """

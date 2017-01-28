@@ -7,7 +7,7 @@ import com.github.ctp.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.Project
-import com.github.ctp.publisher.todoist.service.{HttpRunner, ProjectListManager}
+import com.github.ctp.publisher.todoist.service.{TodoistHttpRunner, ProjectListManager}
 import com.github.ctp.util.UuidGenerator
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FlatSpec
@@ -20,7 +20,7 @@ class TodoistTaskPublisherActorTest extends FlatSpec with MockFactory {
     val uuid = "c1c8d910-cf92-11e6-bf26-cec0c932ce01"
     val userData = UserData("userName", Some(TodoistUser(enabled = true, Some("12345678"))))
 
-    val httpRunner = mock[HttpRunner]
+    val httpRunner = mock[TodoistHttpRunner]
     val uuidGenerator = stub[UuidGenerator]
     val projectListManager = stub[ProjectListManager]
     val ctpLogger = stub[CtpLogger]

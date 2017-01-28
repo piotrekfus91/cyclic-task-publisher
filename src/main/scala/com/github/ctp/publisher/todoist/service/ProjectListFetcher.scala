@@ -6,7 +6,7 @@ import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
 import com.google.inject.Inject
 import spray.json._
 
-class ProjectListFetcher @Inject() (private val httpRunner: HttpRunner) {
+class ProjectListFetcher @Inject() (private val httpRunner: TodoistHttpRunner) {
   def fetchProjectsOfUser(userData: UserData): List[Project] = {
     val response = httpRunner.getProjects(userData)
     val json = response.parseJson
