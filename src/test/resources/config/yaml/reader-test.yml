@@ -9,6 +9,8 @@ allTasks:
       project: "test project"
       schedule:
         cron: "*/5 1-3 * * *"
+      publishers:
+      - todoist
 users:
   piotrek:
     todoist:

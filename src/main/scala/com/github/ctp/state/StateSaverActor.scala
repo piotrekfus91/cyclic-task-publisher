@@ -20,7 +20,7 @@ class StateSaverActor(@StateSerializer private val stateSerializer: ActorRef, fi
   override def receive: Receive = {
     case GetLastExecutionTime(user, description) =>
       state.tasks.find(stateTask => stateTask.user == user && stateTask.description == description) match {
-        case None => logger.info(s"no task for user $user and $description")
+        case None =>sender ! NoExecutionYet(user, description)
         case Some(stateTask) => sender ! LastExecutionTime(user, description, stateTask.last)
       }
     case newState: State =>

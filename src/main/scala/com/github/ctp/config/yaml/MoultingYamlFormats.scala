@@ -12,7 +12,11 @@ object MoultingYamlFormats extends DefaultYamlProtocol {
         case YamlNull => Map[String, String]()
         case scheduleMap => scheduleMap.convertTo[Map[String, String]]
       }
-      Task(description, project, schedule)
+      val publishers = map.get(YamlString("publishers")) match {
+        case None => List()
+        case Some(list) => list.convertTo[List[String]]
+      }
+      Task(description, project, schedule, publishers)
     }
 
     override def read(yaml: YamlValue): Task = {

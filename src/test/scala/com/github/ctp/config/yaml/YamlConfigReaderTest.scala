@@ -16,8 +16,8 @@ class YamlConfigReaderTest extends FlatSpec with Matchers {
       Map(
         ("piotrek", UserTasks(
           List(
-            Task("description one", "test project"),
-            Task("description two", "test project", Map("cron" -> "*/5 1-3 * * *"))
+            Task("description one", "test project", Map(), List()),
+            Task("description two", "test project", Map("cron" -> "*/5 1-3 * * *"), List("todoist"))
           )
         ))
       ),

@@ -9,8 +9,6 @@ import com.github.ctp.util.FileHelper
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpecLike, Matchers}
 
-import scala.concurrent.duration._
-
 class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSender with FlatSpecLike with Matchers with MockFactory {
   val filePath = "/tmp/stateSaver.yml"
   val fileHelper = stub[FileHelper]
@@ -104,7 +102,7 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     )))
   }
 
-  it should "not send anything if task hasn't been added" in {
+  it should "send no execution info if task hasn't been added" in {
     (fileHelper.read _).when(filePath).returns("")
 
     val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
@@ -114,7 +112,7 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! GetLastExecutionTime("user", "desc")
 
-    expectNoMsg(100 millis)
+    expectMsg(NoExecutionYet("user", "desc"))
   }
 
   it should "not respond with last execution time" in {
