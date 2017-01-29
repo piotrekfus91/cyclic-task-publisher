@@ -1,20 +1,20 @@
 package com.github.ctp.state
 
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 import com.github.ctp.state.dto.{State, StateTask}
 import net.jcazevedo.moultingyaml.{DefaultYamlProtocol, YamlFormat, YamlString, YamlValue}
 import spray.json.DeserializationException
 
 object StateMoultingFormats extends DefaultYamlProtocol {
-  implicit object ZonedDateTimeFormat extends YamlFormat[ZonedDateTime] {
-    override def write(zonedDateTime: ZonedDateTime): YamlValue = {
-      YamlString(zonedDateTime.toString)
+  implicit object LocalDateTimeFormat extends YamlFormat[LocalDateTime] {
+    override def write(localDateTime: LocalDateTime): YamlValue = {
+      YamlString(localDateTime.toString)
     }
 
-    override def read(yaml: YamlValue): ZonedDateTime = {
+    override def read(yaml: YamlValue): LocalDateTime = {
       yaml match {
-        case YamlString(str) => ZonedDateTime.parse(str)
+        case YamlString(str) => LocalDateTime.parse(str)
         case _ => throw DeserializationException("cannot deserialize date")
       }
     }

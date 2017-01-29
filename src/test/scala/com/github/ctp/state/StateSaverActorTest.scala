@@ -1,6 +1,6 @@
 package com.github.ctp.state
 
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -36,9 +36,9 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val dateTime1 = ZonedDateTime.now
-    val dateTime2 = ZonedDateTime.now.plusDays(1)
-    val dateTime3 = ZonedDateTime.now.plusDays(2)
+    val dateTime1 = LocalDateTime.now
+    val dateTime2 = LocalDateTime.now.plusDays(1)
+    val dateTime3 = LocalDateTime.now.plusDays(2)
     val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
     val stateTask2 = StateTask("user", "desc 2", Map("type2" -> dateTime3))
 
@@ -58,9 +58,9 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val dateTime1 = ZonedDateTime.now
-    val dateTime2 = ZonedDateTime.now.plusDays(1)
-    val dateTime3 = ZonedDateTime.now.plusDays(2)
+    val dateTime1 = LocalDateTime.now
+    val dateTime2 = LocalDateTime.now.plusDays(1)
+    val dateTime3 = LocalDateTime.now.plusDays(2)
     val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
     val stateTask2 = StateTask("user", "desc 2", Map("type2" -> dateTime3))
     val stateTask3 = StateTask("user2", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
@@ -81,10 +81,10 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val dateTime1 = ZonedDateTime.now
-    val dateTime2 = ZonedDateTime.now.plusDays(1)
-    val dateTime3 = ZonedDateTime.now.plusDays(2)
-    val dateTime4 = ZonedDateTime.now.plusDays(3)
+    val dateTime1 = LocalDateTime.now
+    val dateTime2 = LocalDateTime.now.plusDays(1)
+    val dateTime3 = LocalDateTime.now.plusDays(2)
+    val dateTime4 = LocalDateTime.now.plusDays(3)
     val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
     val stateTask3 = StateTask("user2", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
     val stateTask2 = StateTask("user", "desc 1", Map("type2" -> dateTime3))
@@ -125,7 +125,7 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val now = ZonedDateTime.now
+    val now = LocalDateTime.now
     sut ! StateTask("user", "desc", Map("type" -> now))
 
     sut ! GetLastExecutionTime("user", "desc")
@@ -141,9 +141,9 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val yesterday = ZonedDateTime.now.minusDays(1)
+    val yesterday = LocalDateTime.now.minusDays(1)
     sut ! StateTask("user", "desc", Map("type" -> yesterday))
-    val now = ZonedDateTime.now
+    val now = LocalDateTime.now
     sut ! StateTask("user", "desc", Map("type" -> now))
 
     sut ! GetLastExecutionTime("user", "desc")
