@@ -2,7 +2,7 @@ package com.github.ctp.config.yaml
 
 import com.github.ctp.config.ConfigReader
 import com.github.ctp.config.yaml.MoultingYamlFormats._
-import com.github.ctp.domain.{Config, UserData}
+import com.github.ctp.config.domain.{Config, UserData}
 import com.github.ctp.util.FileHelper
 import com.google.inject.Inject
 import com.google.inject.name.Named

@@ -3,7 +3,7 @@ package com.github.ctp.publisher.todoist
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorSystem, Props}
-import com.github.ctp.domain.{Task, TodoistUser, UserData}
+import com.github.ctp.config.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.Project

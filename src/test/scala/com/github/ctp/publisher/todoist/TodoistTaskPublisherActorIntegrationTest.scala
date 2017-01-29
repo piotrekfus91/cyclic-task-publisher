@@ -3,7 +3,7 @@ package com.github.ctp.publisher.todoist
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import com.github.ctp.domain.{Task, TodoistUser, UserData}
+import com.github.ctp.config.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.guice._
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.service.ProjectListManager

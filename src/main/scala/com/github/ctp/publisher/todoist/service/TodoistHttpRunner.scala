@@ -1,6 +1,6 @@
 package com.github.ctp.publisher.todoist.service
 
-import com.github.ctp.domain.UserData
+import com.github.ctp.config.domain.UserData
 import com.github.ctp.publisher.todoist.TodoistConsts
 import com.typesafe.scalalogging.LazyLogging
 

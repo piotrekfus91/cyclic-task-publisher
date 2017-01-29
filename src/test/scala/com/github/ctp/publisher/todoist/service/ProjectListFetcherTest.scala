@@ -1,6 +1,6 @@
 package com.github.ctp.publisher.todoist.service
 
-import com.github.ctp.domain.{TodoistUser, UserData}
+import com.github.ctp.config.domain.{TodoistUser, UserData}
 import com.github.ctp.publisher.todoist.dto.Project
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpec, Matchers}

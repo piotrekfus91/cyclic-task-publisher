@@ -1,12 +1,33 @@
 package com.github.ctp.config.yaml
 
-import com.github.ctp.domain._
+import com.github.ctp.config.domain._
 import net.jcazevedo.moultingyaml._
 
 object MoultingYamlFormats extends DefaultYamlProtocol {
-  implicit val taskFormat = yamlFormat2(Task)
+  implicit object TaskFormat extends YamlFormat[Task] {
+    private def fromYamlObject(map: Map[YamlValue, YamlValue]) = {
+      val description = map(YamlString("description")).asInstanceOf[YamlString].value
+      val project = map(YamlString("project")).asInstanceOf[YamlString].value
+      val schedule = map(YamlString("schedule")) match {
+        case YamlNull => Map[String, String]()
+        case scheduleMap => scheduleMap.convertTo[Map[String, String]]
+      }
+      Task(description, project, schedule)
+    }
+
+    override def read(yaml: YamlValue): Task = {
+      yaml match {
+        case YamlObject(map) => fromYamlObject(map)
+        case _ => deserializationError("cannot deserialize task")
+      }
+    }
+
+    override def write(obj: Task): YamlValue = ???
+  }
+
   implicit val userTasksFormat = yamlFormat1(UserTasks)
   implicit val todoistUserFormat = yamlFormat2(TodoistUser)
+
   implicit object UserDataFormat extends YamlFormat[UserData] {
     private def fromYamlObject(map: Map[YamlValue, YamlValue]) = {
       UserData("", map.get(YamlString("todoist")).map(todoistUserFormat.read))
@@ -27,5 +48,6 @@ object MoultingYamlFormats extends DefaultYamlProtocol {
       }
     }
   }
+
   implicit val configFormat = yamlFormat2(Config)
 }

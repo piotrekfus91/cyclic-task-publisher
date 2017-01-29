@@ -4,8 +4,11 @@ allTasks:
     tasks:
     - description: "description one"
       project: "test project"
+      schedule:
     - description: "description two"
       project: "test project"
+      schedule:
+        cron: "*/5 1-3 * * *"
 users:
   piotrek:
     todoist:
