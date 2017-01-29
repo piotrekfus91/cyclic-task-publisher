@@ -3,13 +3,15 @@ package com.github.ctp.state
 import java.time.ZonedDateTime
 
 import akka.actor.{ActorSystem, Props}
-import akka.testkit.{TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.ctp.state.dto.{State, StateTask}
 import com.github.ctp.util.FileHelper
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpecLike, Matchers}
 
-class StateSaverActorTest extends TestKit(ActorSystem("test")) with FlatSpecLike with Matchers with MockFactory {
+import scala.concurrent.duration._
+
+class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSender with FlatSpecLike with Matchers with MockFactory {
   val filePath = "/tmp/stateSaver.yml"
   val fileHelper = stub[FileHelper]
   val stateSerializer = TestProbe()
@@ -100,5 +102,52 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with FlatSpecLike
       StateTask("user2", "desc 1", Map("type1" -> dateTime3, "type2" -> dateTime1)),
       StateTask("user2", "desc 2", Map("type2" -> dateTime4))
     )))
+  }
+
+  it should "not send anything if task hasn't been added" in {
+    (fileHelper.read _).when(filePath).returns("")
+
+    val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
+    stateSerializer.expectMsg(DeserializeState(""))
+
+    sut ! State(List())
+
+    sut ! GetLastExecutionTime("user", "desc")
+
+    expectNoMsg(100 millis)
+  }
+
+  it should "not respond with last execution time" in {
+    (fileHelper.read _).when(filePath).returns("")
+
+    val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
+    stateSerializer.expectMsg(DeserializeState(""))
+
+    sut ! State(List())
+
+    val now = ZonedDateTime.now
+    sut ! StateTask("user", "desc", Map("type" -> now))
+
+    sut ! GetLastExecutionTime("user", "desc")
+
+    expectMsg(LastExecutionTime("user", "desc", Map("type" -> now)))
+  }
+
+  it should "not respond with last execution time even if updated" in {
+    (fileHelper.read _).when(filePath).returns("")
+
+    val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
+    stateSerializer.expectMsg(DeserializeState(""))
+
+    sut ! State(List())
+
+    val yesterday = ZonedDateTime.now.minusDays(1)
+    sut ! StateTask("user", "desc", Map("type" -> yesterday))
+    val now = ZonedDateTime.now
+    sut ! StateTask("user", "desc", Map("type" -> now))
+
+    sut ! GetLastExecutionTime("user", "desc")
+
+    expectMsg(LastExecutionTime("user", "desc", Map("type" -> now)))
   }
 }
