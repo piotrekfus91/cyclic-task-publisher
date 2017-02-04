@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import com.github.ctp.config.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.guice._
-import com.github.ctp.publisher.Publish
+import com.github.ctp.publisher.{Publish, PublisherSequence}
 import com.github.ctp.publisher.todoist.service.ProjectListManager
 import com.github.ctp.test.TodoistIntegrationTestContext._
 import com.google.inject.Guice
@@ -41,7 +41,7 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
   }
 
   it should "create task in real Todoist" in {
-    todoistTaskPublisher ! Publish(userData, task)
+    todoistTaskPublisher ! Publish(userData, task, PublisherSequence(List()))
 
     actorSystem.stop(todoistTaskPublisher)
 

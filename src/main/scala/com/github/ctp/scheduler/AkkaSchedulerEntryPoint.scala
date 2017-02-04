@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import akka.actor.{Actor, ActorRef}
 import com.github.ctp.config.ConfigReader
 import com.github.ctp.config.domain.{Config, Task, UserData}
-import com.github.ctp.publisher.{Publish, PublisherSelector}
+import com.github.ctp.publisher.{Publish, PublisherSelector, PublisherSequence}
 import com.github.ctp.state.{GetLastExecutionTime, LastExecutionTime, NoExecutionYet, StateSaver}
 import com.github.ctp.util.TimeCalculator
 import com.google.inject.BindingAnnotation
@@ -52,13 +52,15 @@ class AkkaSchedulerEntryPointActor(configReader: ConfigReader, @StateSaver state
   private def scheduleTasks(parserResults: Iterable[Either[String, Scheduler]], user: UserData, task: Task) = {
     parserResults.filter(either => either.isRight).map(_.right.get).foreach(scheduler => {
       val nextTime = scheduler.getNextTime(LocalDateTime.now())
-      task.publishers.foreach(publisher => {
-        context.system.scheduler.scheduleOnce(
-          delay = timeCalculator.calculateDuration(LocalDateTime.now(), nextTime),
-          receiver = publisherSelector.get(publisher),
-          message = Publish(user, task)
-        )
-      })
+      val publishers = task.publishers.map(publisherSelector.get)
+      publishers match {
+        case head :: tail =>
+          context.system.scheduler.scheduleOnce(
+            delay = timeCalculator.calculateDuration(LocalDateTime.now(), nextTime),
+            receiver = head,
+            message = Publish(user, task, PublisherSequence(tail))
+          )
+      }
     })
   }
 

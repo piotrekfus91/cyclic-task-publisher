@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.testkit.{TestKit, TestProbe}
 import com.github.ctp.config.domain.{Task, TodoistUser, UserData}
 import com.github.ctp.logger.CtpLogger
-import com.github.ctp.publisher.Publish
+import com.github.ctp.publisher.{Publish, PublisherSequence}
 import com.github.ctp.publisher.todoist.dto.Project
 import com.github.ctp.publisher.todoist.service.{ProjectListManager, TodoistHttpRunner}
 import com.github.ctp.scheduler.Retrigger
@@ -45,7 +45,7 @@ class TodoistTaskPublisherActorTest extends TestKit(ActorSystem("test")) with Fl
     val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
         projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
 
-    sut ! Publish(userData, task)
+    sut ! Publish(userData, task, PublisherSequence(List()))
 
     Thread.sleep(100)
   }
@@ -64,8 +64,28 @@ class TodoistTaskPublisherActorTest extends TestKit(ActorSystem("test")) with Fl
     val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
       projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
 
-    sut ! Publish(userData, task)
+    sut ! Publish(userData, task, PublisherSequence(List()))
 
     retriggeringService.expectMsg(Retrigger("userName", "desc", "todoist", dateTimeProvider.dateTime))
+  }
+
+  it should "propagate publishing to next actor" in {
+    val httpRunner = stub[TodoistHttpRunner]
+    val uuidGenerator = stub[UuidGenerator]
+    val projectListManager = stub[ProjectListManager]
+    val ctpLogger = stub[CtpLogger]
+    val retriggeringService = TestProbe()
+    val nextPublisher = TestProbe()
+
+    projectListManager.getUserProjectByName _ when(userData, "test project") returns Some(Project("test project", 123456L))
+    (uuidGenerator.uuid _).when().returns(uuid)
+    (httpRunner.publishTask _).when(*, *).returns(Right())
+
+    val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
+      projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
+
+    sut ! Publish(userData, task, PublisherSequence(List(nextPublisher.ref)))
+
+    nextPublisher.expectMsg(Publish(userData, task, PublisherSequence(List())))
   }
 }

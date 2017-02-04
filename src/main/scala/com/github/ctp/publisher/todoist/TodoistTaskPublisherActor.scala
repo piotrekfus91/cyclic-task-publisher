@@ -3,10 +3,10 @@ package com.github.ctp.publisher.todoist
 import akka.actor.{Actor, ActorRef}
 import com.github.ctp.config.domain.{Task, UserData}
 import com.github.ctp.logger.CtpLogger
-import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
 import com.github.ctp.publisher.todoist.service.{ProjectListManager, TodoistHttpRunner}
+import com.github.ctp.publisher.{Publish, Publisher}
 import com.github.ctp.scheduler.{Retrigger, RetriggeringService}
 import com.github.ctp.util.{DateTimeProvider, UuidGenerator}
 import com.google.inject.{BindingAnnotation, Inject}
@@ -20,15 +20,17 @@ class TodoistTaskPublisherActor @Inject()(private val projectListManager: Projec
                                           private val uuidGenerator: UuidGenerator,
                                           private val dateTimeProvider: DateTimeProvider,
                                           @RetriggeringService private val retriggeringService: ActorRef,
-                                          private val ctpLogger: CtpLogger) extends Actor with LazyLogging {
+                                          private val ctpLogger: CtpLogger)
+    extends Actor with LazyLogging with Publisher {
 
   override def receive: Receive = {
-    case Publish(userData, task) =>
-      publish(userData, task)
-      retriggeringService ! Retrigger(userData.name, task.description, "todoist", dateTimeProvider.now)
+    case publish: Publish =>
+      publishTask(publish.userData, publish.task)
+      propagate(publish)
+      retriggeringService ! Retrigger(publish.userData.name, publish.task.description, "todoist", dateTimeProvider.now)
   }
 
-  private def publish(userData: UserData, task: Task): Unit = {
+  private def publishTask(userData: UserData, task: Task): Unit = {
     logger.info(s"publishing $task for ${userData.name}")
     projectListManager.refreshUserProjects(userData)
     val maybeProject = projectListManager.getUserProjectByName(userData, task.project)
