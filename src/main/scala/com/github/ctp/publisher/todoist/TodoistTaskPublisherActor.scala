@@ -1,13 +1,14 @@
 package com.github.ctp.publisher.todoist
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import com.github.ctp.config.domain.{Task, UserData}
 import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.Publish
 import com.github.ctp.publisher.todoist.dto.{Command, Project, TodoistTask}
 import com.github.ctp.publisher.todoist.service.TodoistJsonProtocol._
-import com.github.ctp.publisher.todoist.service.{TodoistHttpRunner, ProjectListManager}
-import com.github.ctp.util.UuidGenerator
+import com.github.ctp.publisher.todoist.service.{ProjectListManager, TodoistHttpRunner}
+import com.github.ctp.scheduler.{Retrigger, RetriggeringService}
+import com.github.ctp.util.{DateTimeProvider, UuidGenerator}
 import com.google.inject.{BindingAnnotation, Inject}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json._
@@ -17,10 +18,14 @@ import scala.annotation.StaticAnnotation
 class TodoistTaskPublisherActor @Inject()(private val projectListManager: ProjectListManager,
                                           private val httpRunner: TodoistHttpRunner,
                                           private val uuidGenerator: UuidGenerator,
+                                          private val dateTimeProvider: DateTimeProvider,
+                                          @RetriggeringService private val retriggeringService: ActorRef,
                                           private val ctpLogger: CtpLogger) extends Actor with LazyLogging {
 
   override def receive: Receive = {
-    case Publish(userData, task) => publish(userData, task)
+    case Publish(userData, task) =>
+      publish(userData, task)
+      retriggeringService ! Retrigger(userData.name, task.description, "todoist", dateTimeProvider.now)
   }
 
   private def publish(userData: UserData, task: Task): Unit = {

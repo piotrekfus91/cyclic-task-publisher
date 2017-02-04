@@ -16,6 +16,7 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
     new AkkaModule,
     new LoggerModule,
     new ConfigModule,
+    new UtilModule,
     new TodoistPublisherModule
   )
 
@@ -48,8 +49,6 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
   }
 
   override protected def afterEach(): Unit = {
-    assume(todoistAvailable)
-
     deleteTestProject()
   }
 }
