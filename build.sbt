@@ -18,12 +18,14 @@ val akkaDependencies = Seq(
 
 val testDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-  "org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test"
+  "org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 )
 
 libraryDependencies ++= Seq(
   "net.jcazevedo" %% "moultingyaml" % "0.4.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "org.scalaj" %% "scalaj-http" % "2.3.0",
-  "io.spray" %%  "spray-json" % "1.3.3"
+  "io.spray" %%  "spray-json" % "1.3.3",
+  "com.cronutils" % "cron-utils" % "5.0.5"
 ) ++ diDependencies ++ akkaDependencies ++ testDependencies
