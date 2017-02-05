@@ -49,6 +49,7 @@ class AkkaSchedulerEntryPointActor(configReader: ConfigReader, @StateSaver state
   }
 
   private def scheduleFromConfig(userName: String, description: String, last: Option[LocalDateTime]) = {
+    logger.info(s"scheduling task $description for user $userName to date $last")
     val user = config.users(userName)
     val maybeTask = config.allTasks(userName).tasks.find(task => task.description == description)
     maybeTask.foreach(task => {

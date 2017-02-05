@@ -1,5 +1,7 @@
 package com.github.ctp.publisher
 
-trait Publisher extends PublishPropagator {
+import akka.actor.Actor
+
+trait Publisher extends Actor with PublishPropagator {
 
 }

@@ -7,10 +7,9 @@ import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.ctp.config.ConfigReader
 import com.github.ctp.config.domain._
-import com.github.ctp.publisher.{Publish, PublisherSelector, PublisherSequence}
-import com.github.ctp.scheduler.cron.CronScheduleParser
+import com.github.ctp.publisher.{Publish, PublisherSequence}
 import com.github.ctp.state.{GetLastExecutionTime, LastExecutionTime, NoExecutionYet}
-import com.github.ctp.test.TestDateTimeProvider
+import com.github.ctp.test.{TestDateTimeProvider, TestPublisherSelector, TestScheduleParsersSelector}
 import com.github.ctp.util.TimeCalculator
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpecLike, Matchers}
@@ -22,19 +21,24 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
 
   val configReader = stub[ConfigReader]
   val stateSaver = TestProbe()
-  val todoistTaskPublisher = TestProbe()
-  val cronScheduleParser = stub[CronScheduleParser]
-  val cronScheduler = stub[Scheduler]
-  val scheduleParsersFinder = new ScheduleParsersSelector(cronScheduleParser)
+  val publisher1 = TestProbe()
+  val publisher2 = TestProbe()
+  val scheduleParser = stub[ScheduleParser]
+  val scheduler = stub[Scheduler]
+  val scheduleParsersFinder = new TestScheduleParsersSelector("scheduler1" -> scheduleParser)
   val timeCalculator = new TimeCalculator
-  val publisherSelector = new PublisherSelector(todoistTaskPublisher.ref)
+  val publisherSelector = new TestPublisherSelector(
+    "publisher1" -> publisher1.ref,
+    "publisher2" -> publisher2.ref
+  )
 
   "AkkaSchedulerEntryPoint" should "start single task of single user" in {
-    (cronScheduleParser.parse _).when(*).returns(Right(cronScheduler))
-    (cronScheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
+    dateTimeProvider.update
+    (scheduleParser.parse _).when(*).returns(Right(scheduler))
+    (scheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
 
     val userData = UserData("user", Some(TodoistUser(enabled = true, Some("123456"))))
-    val testingTask = Task("description two", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
+    val testingTask = Task("description two", "test project", Map("scheduler1" -> "schedule"), List("publisher1"))
 
     val config = Config(
       Map(("user", UserTasks(
@@ -54,16 +58,17 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description two"))
     sut ! NoExecutionYet("user", "description two")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
   }
 
   it should "start two tasks of single user" in {
-    (cronScheduleParser.parse _).when(*).returns(Right(cronScheduler))
-    (cronScheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
+    dateTimeProvider.update
+    (scheduleParser.parse _).when(*).returns(Right(scheduler))
+    (scheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
 
     val userData = UserData("user", Some(TodoistUser(enabled = true, Some("123456"))))
-    val testingTask = Task("description two", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
-    val testingTask2 = Task("description three", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
+    val testingTask = Task("description two", "test project", Map("scheduler1" -> "schedule"), List("publisher1"))
+    val testingTask2 = Task("description three", "test project", Map("scheduler1" -> "schedule"), List("publisher2"))
 
     val config = Config(
       Map(("user", UserTasks(
@@ -84,23 +89,23 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description two"))
     sut ! NoExecutionYet("user", "description two")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description three"))
     sut ! NoExecutionYet("user", "description three")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask2, PublisherSequence(List())))
+    publisher2.expectMsg(Publish(userData, testingTask2, PublisherSequence(List())))
   }
 
   it should "start two tasks of two users" in {
     dateTimeProvider.update
-    (cronScheduleParser.parse _).when(*).returns(Right(cronScheduler))
-    (cronScheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
+    (scheduleParser.parse _).when(*).returns(Right(scheduler))
+    (scheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
 
     val userData = UserData("user", Some(TodoistUser(enabled = true, Some("123456"))))
     val user2Data = UserData("user2", Some(TodoistUser(enabled = true, Some("123456"))))
 
-    val testingTask = Task("description two", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
-    val testingTask2 = Task("description three", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
+    val testingTask = Task("description two", "test project", Map("scheduler1" -> "schedule"), List("publisher1"))
+    val testingTask2 = Task("description three", "test project", Map("scheduler1" -> "schedule"), List("publisher1"))
 
     val config = Config(
       Map(("user", UserTasks(
@@ -126,28 +131,28 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description two"))
     sut ! NoExecutionYet("user", "description two")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description three"))
     sut ! NoExecutionYet("user", "description three")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask2, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(userData, testingTask2, PublisherSequence(List())))
 
     stateSaver.expectMsg(GetLastExecutionTime("user2", "description two"))
     sut ! NoExecutionYet("user2", "description two")
-    todoistTaskPublisher.expectMsg(Publish(user2Data, testingTask, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(user2Data, testingTask, PublisherSequence(List())))
 
     stateSaver.expectMsg(GetLastExecutionTime("user2", "description three"))
     sut ! NoExecutionYet("user2", "description three")
-    todoistTaskPublisher.expectMsg(Publish(user2Data, testingTask2, PublisherSequence(List())))
+    publisher1.expectMsg(Publish(user2Data, testingTask2, PublisherSequence(List())))
   }
 
   it should "build correct publishers" in {
     dateTimeProvider.update
-    (cronScheduleParser.parse _).when(*).returns(Right(cronScheduler))
-    (cronScheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
+    (scheduleParser.parse _).when(*).returns(Right(scheduler))
+    (scheduler.getNextTime _).when(*).returns(LocalDateTime.now().plus(100, ChronoUnit.MILLIS))
 
     val userData = UserData("user", Some(TodoistUser(enabled = true, Some("123456"))))
-    val testingTask = Task("description two", "test project", Map("cron" -> "0 0 * * *"), List("todoist", "todoist"))
+    val testingTask = Task("description two", "test project", Map("scheduler1" -> "schedule"), List("publisher1", "publisher2"))
 
     val config = Config(
       Map(("user", UserTasks(
@@ -167,8 +172,8 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
 
     stateSaver.expectMsg(GetLastExecutionTime("user", "description two"))
     sut ! NoExecutionYet("user", "description two")
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask, PublisherSequence(List(todoistTaskPublisher.ref))))
-    todoistTaskPublisher.expectNoMsg(100 millis)
+    publisher1.expectMsg(Publish(userData, testingTask, PublisherSequence(List(publisher2.ref))))
+    publisher1.expectNoMsg(100 millis)
   }
 
   it should "schedule next execution" in {
@@ -176,11 +181,11 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
     val firstTime = dateTimeProvider.now
     val secondTime = firstTime.plus(200, ChronoUnit.MILLIS)
 
-    (cronScheduleParser.parse _).when(*).returns(Right(cronScheduler))
-    (cronScheduler.getNextTime _).when(firstTime).returns(secondTime)
+    (scheduleParser.parse _).when(*).returns(Right(scheduler))
+    (scheduler.getNextTime _).when(firstTime).returns(secondTime)
 
     val userData = UserData("user", Some(TodoistUser(enabled = true, Some("123456"))))
-    val testingTask = Task("description two", "test project", Map("cron" -> "0 0 * * *"), List("todoist"))
+    val testingTask = Task("description two", "test project", Map("scheduler1" -> "schedule"), List("publisher1"))
 
     val config = Config(
       Map(("user", UserTasks(
@@ -201,7 +206,7 @@ class AkkaSchedulerEntryPointActorTest extends TestKit(ActorSystem("test")) with
     stateSaver.expectMsg(GetLastExecutionTime("user", "description two"))
     sut ! LastExecutionTime("user", "description two", firstTime)
 
-    todoistTaskPublisher.expectNoMsg(50 millis)
-    todoistTaskPublisher.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
+    publisher1.expectNoMsg(50 millis)
+    publisher1.expectMsg(Publish(userData, testingTask, PublisherSequence(List())))
   }
 }

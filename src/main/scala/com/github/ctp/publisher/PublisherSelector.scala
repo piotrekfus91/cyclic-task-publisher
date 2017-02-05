@@ -3,7 +3,11 @@ package com.github.ctp.publisher
 import akka.actor.ActorRef
 import com.github.ctp.publisher.todoist.TodoistTaskPublisher
 
-class PublisherSelector(@TodoistTaskPublisher todoistTaskPublisher: ActorRef) {
+trait PublisherSelector {
+  def get(publisherName: String): ActorRef
+}
+
+class PublisherSelectorImpl(@TodoistTaskPublisher todoistTaskPublisher: ActorRef) extends PublisherSelector {
   private val publishers = Map[String, ActorRef](
     "todoist" -> todoistTaskPublisher
   )
