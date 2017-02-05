@@ -2,9 +2,8 @@
 tasks:
   - user: piotrek
     description: test task
-    last:
+    last: 2017-02-05T14:35:17
       todoist: 123
   - user: piotrek
     description: another task
-    last:
-      todoist: 321
+    last: 2017-02-05T14:35:18

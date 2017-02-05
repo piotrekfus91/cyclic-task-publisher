@@ -5,11 +5,14 @@ import java.time.LocalDateTime
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.ctp.state.dto.{State, StateTask}
+import com.github.ctp.test.TestDateTimeProvider
 import com.github.ctp.util.FileHelper
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FlatSpecLike, Matchers}
 
-class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSender with FlatSpecLike with Matchers with MockFactory {
+class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSender with FlatSpecLike with Matchers
+    with MockFactory with TestDateTimeProvider {
+
   val filePath = "/tmp/stateSaver.yml"
   val fileHelper = stub[FileHelper]
   val stateSerializer = TestProbe()
@@ -19,11 +22,11 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
     stateSerializer.expectMsg(DeserializeState("some state"))
-    sut ! State(List(StateTask("user", "desc", Map())))
+    sut ! State(List(StateTask("user", "desc", nowDateTime)))
 
     sut ! Flush
 
-    stateSerializer.expectMsg(State(List(StateTask("user", "desc", Map()))))
+    stateSerializer.expectMsg(State(List(StateTask("user", "desc", nowDateTime))))
   }
 
   it should "handle incoming state tasks of single user" in {
@@ -34,11 +37,8 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
 
     sut ! State(List())
 
-    val dateTime1 = LocalDateTime.now
-    val dateTime2 = LocalDateTime.now.plusDays(1)
-    val dateTime3 = LocalDateTime.now.plusDays(2)
-    val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
-    val stateTask2 = StateTask("user", "desc 2", Map("type2" -> dateTime3))
+    val stateTask1 = StateTask("user", "desc 1", LocalDateTime.now)
+    val stateTask2 = StateTask("user", "desc 2", LocalDateTime.now.plusDays(1))
 
     sut ! stateTask1
     sut ! stateTask2
@@ -59,10 +59,10 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     val dateTime1 = LocalDateTime.now
     val dateTime2 = LocalDateTime.now.plusDays(1)
     val dateTime3 = LocalDateTime.now.plusDays(2)
-    val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
-    val stateTask2 = StateTask("user", "desc 2", Map("type2" -> dateTime3))
-    val stateTask3 = StateTask("user2", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
-    val stateTask4 = StateTask("user2", "desc 3", Map("type2" -> dateTime3))
+    val stateTask1 = StateTask("user", "desc 1", dateTime1)
+    val stateTask2 = StateTask("user", "desc 2", dateTime3)
+    val stateTask3 = StateTask("user2", "desc 1", dateTime2)
+    val stateTask4 = StateTask("user2", "desc 3", dateTime3)
 
     List(stateTask1, stateTask2, stateTask3, stateTask4).foreach(sut ! _)
 
@@ -83,22 +83,22 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     val dateTime2 = LocalDateTime.now.plusDays(1)
     val dateTime3 = LocalDateTime.now.plusDays(2)
     val dateTime4 = LocalDateTime.now.plusDays(3)
-    val stateTask1 = StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
-    val stateTask3 = StateTask("user2", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime2))
-    val stateTask2 = StateTask("user", "desc 1", Map("type2" -> dateTime3))
-    val stateTask4 = StateTask("user2", "desc 1", Map("type2" -> dateTime1))
-    val stateTask5 = StateTask("user2", "desc 2", Map("type2" -> dateTime2))
-    val stateTask6 = StateTask("user2", "desc 1", Map("type1" -> dateTime3))
-    val stateTask7 = StateTask("user2", "desc 2", Map("type2" -> dateTime4))
+    val stateTask1 = StateTask("user", "desc 1", dateTime1)
+    val stateTask3 = StateTask("user2", "desc 1", dateTime1)
+    val stateTask2 = StateTask("user", "desc 1", dateTime3)
+    val stateTask4 = StateTask("user2", "desc 1", dateTime1)
+    val stateTask5 = StateTask("user2", "desc 2", dateTime2)
+    val stateTask6 = StateTask("user2", "desc 1", dateTime3)
+    val stateTask7 = StateTask("user2", "desc 2", dateTime4)
 
     List(stateTask1, stateTask2, stateTask3, stateTask4, stateTask5, stateTask6, stateTask7).foreach(sut ! _)
 
     sut ! Flush
 
     stateSerializer.expectMsg(State(List(
-      StateTask("user", "desc 1", Map("type1" -> dateTime1, "type2" -> dateTime3)),
-      StateTask("user2", "desc 1", Map("type1" -> dateTime3, "type2" -> dateTime1)),
-      StateTask("user2", "desc 2", Map("type2" -> dateTime4))
+      StateTask("user", "desc 1", dateTime3),
+      StateTask("user2", "desc 1", dateTime3),
+      StateTask("user2", "desc 2", dateTime4)
     )))
   }
 
@@ -115,7 +115,7 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     expectMsg(NoExecutionYet("user", "desc"))
   }
 
-  it should "not respond with last execution time" in {
+  it should "respond with last execution time" in {
     (fileHelper.read _).when(filePath).returns("")
 
     val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
@@ -124,14 +124,14 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     sut ! State(List())
 
     val now = LocalDateTime.now
-    sut ! StateTask("user", "desc", Map("type" -> now))
+    sut ! StateTask("user", "desc", now)
 
     sut ! GetLastExecutionTime("user", "desc")
 
-    expectMsg(LastExecutionTime("user", "desc", Map("type" -> now)))
+    expectMsg(LastExecutionTime("user", "desc", now))
   }
 
-  it should "not respond with last execution time even if updated" in {
+  it should "respond with last execution time even if updated" in {
     (fileHelper.read _).when(filePath).returns("")
 
     val sut = system.actorOf(Props(new StateSaverActor(stateSerializer.ref, fileHelper, filePath)))
@@ -140,12 +140,12 @@ class StateSaverActorTest extends TestKit(ActorSystem("test")) with ImplicitSend
     sut ! State(List())
 
     val yesterday = LocalDateTime.now.minusDays(1)
-    sut ! StateTask("user", "desc", Map("type" -> yesterday))
+    sut ! StateTask("user", "desc", yesterday)
     val now = LocalDateTime.now
-    sut ! StateTask("user", "desc", Map("type" -> now))
+    sut ! StateTask("user", "desc", now)
 
     sut ! GetLastExecutionTime("user", "desc")
 
-    expectMsg(LastExecutionTime("user", "desc", Map("type" -> now)))
+    expectMsg(LastExecutionTime("user", "desc", now))
   }
 }

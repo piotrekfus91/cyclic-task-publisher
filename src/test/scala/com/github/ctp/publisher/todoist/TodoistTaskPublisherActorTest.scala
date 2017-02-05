@@ -7,7 +7,6 @@ import com.github.ctp.logger.CtpLogger
 import com.github.ctp.publisher.{Publish, PublisherSequence}
 import com.github.ctp.publisher.todoist.dto.Project
 import com.github.ctp.publisher.todoist.service.{ProjectListManager, TodoistHttpRunner}
-import com.github.ctp.scheduler.Retrigger
 import com.github.ctp.test.TestDateTimeProvider
 import com.github.ctp.util.UuidGenerator
 import org.scalamock.scalatest.MockFactory
@@ -26,7 +25,6 @@ class TodoistTaskPublisherActorTest extends TestKit(ActorSystem("test")) with Fl
     val uuidGenerator = stub[UuidGenerator]
     val projectListManager = stub[ProjectListManager]
     val ctpLogger = stub[CtpLogger]
-    val retriggeringService = TestProbe()
 
     projectListManager.getUserProjectByName _ when(userData, "test project") returns Some(Project("test project", 123456L))
     (uuidGenerator.uuid _).when().returns(uuid)
@@ -43,30 +41,11 @@ class TodoistTaskPublisherActorTest extends TestKit(ActorSystem("test")) with Fl
 
 
     val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
-        projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
+        projectListManager, httpRunner, uuidGenerator, dateTimeProvider, ctpLogger)))
 
     sut ! Publish(userData, task, PublisherSequence(List()))
 
     Thread.sleep(100)
-  }
-
-  it should "send retriggering message" in {
-    val httpRunner = stub[TodoistHttpRunner]
-    val uuidGenerator = stub[UuidGenerator]
-    val projectListManager = stub[ProjectListManager]
-    val ctpLogger = stub[CtpLogger]
-    val retriggeringService = TestProbe()
-
-    projectListManager.getUserProjectByName _ when(userData, "test project") returns Some(Project("test project", 123456L))
-    (uuidGenerator.uuid _).when().returns(uuid)
-    (httpRunner.publishTask _).when(*, *).returns(Right())
-
-    val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
-      projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
-
-    sut ! Publish(userData, task, PublisherSequence(List()))
-
-    retriggeringService.expectMsg(Retrigger("userName", "desc", "todoist", dateTimeProvider.dateTime))
   }
 
   it should "propagate publishing to next actor" in {
@@ -82,7 +61,7 @@ class TodoistTaskPublisherActorTest extends TestKit(ActorSystem("test")) with Fl
     (httpRunner.publishTask _).when(*, *).returns(Right())
 
     val sut = system.actorOf(Props(new TodoistTaskPublisherActor(
-      projectListManager, httpRunner, uuidGenerator, dateTimeProvider, retriggeringService.ref, ctpLogger)))
+      projectListManager, httpRunner, uuidGenerator, dateTimeProvider, ctpLogger)))
 
     sut ! Publish(userData, task, PublisherSequence(List(nextPublisher.ref)))
 

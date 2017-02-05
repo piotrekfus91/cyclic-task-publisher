@@ -14,19 +14,17 @@ class StateSerializerActorTest extends TestKit(ActorSystem("test")) with Implici
     """tasks:
       |- user: piotrek
       |  description: task one
-      |  last:
-      |    todoist: '2017-01-01T21:46:37'
+      |  last: '2017-01-01T21:46:37'
       |- user: piotrek
       |  description: task two
-      |  last:
-      |    todoist: '2017-01-01T21:46:38'
+      |  last: '2017-01-01T21:46:38'
       |""".stripMargin
 
   "State serializer" should "serialize state" in {
     val sut = TestActorRef[StateSerializerActor]
     sut ! State(List(
-      StateTask("piotrek", "task one", Map("todoist" -> LocalDateTime.of(2017, 1, 1, 21, 46, 37))),
-      StateTask("piotrek", "task two", Map("todoist" -> LocalDateTime.of(2017, 1, 1, 21, 46, 38)))
+      StateTask("piotrek", "task one", LocalDateTime.of(2017, 1, 1, 21, 46, 37)),
+      StateTask("piotrek", "task two", LocalDateTime.of(2017, 1, 1, 21, 46, 38))
     ))
     expectMsg(SerializedState(sampleState))
   }
@@ -43,8 +41,8 @@ class StateSerializerActorTest extends TestKit(ActorSystem("test")) with Implici
     sut ! DeserializeState(sampleState)
 
     expectMsg(State(List(
-      StateTask("piotrek", "task one", Map("todoist" -> LocalDateTime.of(2017, 1, 1, 21, 46, 37))),
-      StateTask("piotrek", "task two", Map("todoist" -> LocalDateTime.of(2017, 1, 1, 21, 46, 38)))
+      StateTask("piotrek", "task one", LocalDateTime.of(2017, 1, 1, 21, 46, 37)),
+      StateTask("piotrek", "task two", LocalDateTime.of(2017, 1, 1, 21, 46, 38))
     )))
   }
 }

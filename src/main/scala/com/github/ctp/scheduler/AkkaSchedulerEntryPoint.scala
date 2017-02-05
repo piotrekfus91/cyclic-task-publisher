@@ -7,7 +7,7 @@ import com.github.ctp.config.ConfigReader
 import com.github.ctp.config.domain.{Config, Task, UserData}
 import com.github.ctp.publisher.{Publish, PublisherSelector, PublisherSequence}
 import com.github.ctp.state.{GetLastExecutionTime, LastExecutionTime, NoExecutionYet, StateSaver}
-import com.github.ctp.util.TimeCalculator
+import com.github.ctp.util.{DateTimeProvider, TimeCalculator}
 import com.google.inject.BindingAnnotation
 import com.typesafe.scalalogging.LazyLogging
 
@@ -16,7 +16,8 @@ import scala.collection.immutable.Iterable
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class AkkaSchedulerEntryPointActor(configReader: ConfigReader, @StateSaver stateSaver: ActorRef,
-                                   scheduleParsersFinder: ScheduleParsersFinder, timeCalculator: TimeCalculator,
+                                   scheduleParsersFinder: ScheduleParsersSelector, timeCalculator: TimeCalculator,
+                                   dateTimeProvider: DateTimeProvider,
                                    publisherSelector: PublisherSelector) extends Actor with LazyLogging {
   private val config = configReader.read()
 
@@ -36,27 +37,36 @@ class AkkaSchedulerEntryPointActor(configReader: ConfigReader, @StateSaver state
 
   override def receive: Receive = {
     case NoExecutionYet(user, description) => scheduleFirstExecution(user, description)
-    case LastExecutionTime(user, description, lastExecutionTimes) => scheduleNextExecution(user, description, lastExecutionTimes)
+    case LastExecutionTime(user, description, lastExecutionTime) => scheduleNextExecution(user, description, lastExecutionTime)
   }
 
   private def scheduleFirstExecution(userName: String, description: String) = {
+    scheduleFromConfig(userName, description, None)
+  }
+
+  private def scheduleNextExecution(user: String, description: String, lastExecutionTime: LocalDateTime) = {
+    scheduleFromConfig(user, description, Some(lastExecutionTime))
+  }
+
+  private def scheduleFromConfig(userName: String, description: String, last: Option[LocalDateTime]) = {
     val user = config.users(userName)
     val maybeTask = config.allTasks(userName).tasks.find(task => task.description == description)
     maybeTask.foreach(task => {
       val parserResults: Iterable[Either[String, Scheduler]] = createParseResults(task)
       logParsingErrors(parserResults)
-      scheduleTasks(parserResults, user, task)
+      scheduleTasks(parserResults, user, task, last)
     })
   }
 
-  private def scheduleTasks(parserResults: Iterable[Either[String, Scheduler]], user: UserData, task: Task) = {
+  private def scheduleTasks(parserResults: Iterable[Either[String, Scheduler]], user: UserData, task: Task,
+                            last: Option[LocalDateTime]) = {
     parserResults.filter(either => either.isRight).map(_.right.get).foreach(scheduler => {
-      val nextTime = scheduler.getNextTime(LocalDateTime.now())
+      val nextTime = scheduler.getNextTime(last.getOrElse(dateTimeProvider.now))
       val publishers = task.publishers.map(publisherSelector.get)
       publishers match {
         case head :: tail =>
           context.system.scheduler.scheduleOnce(
-            delay = timeCalculator.calculateDuration(LocalDateTime.now(), nextTime),
+            delay = timeCalculator.calculateDuration(dateTimeProvider.now, nextTime),
             receiver = head,
             message = Publish(user, task, PublisherSequence(tail))
           )
@@ -75,8 +85,6 @@ class AkkaSchedulerEntryPointActor(configReader: ConfigReader, @StateSaver state
   private def logParsingErrors(parserResults: Iterable[Either[String, Scheduler]]) = {
     parserResults.filter(either => either.isLeft).map(_.left.get).foreach(logger.warn(_))
   }
-
-  private def scheduleNextExecution(user: String, description: String, lastExecutionTimes: Map[String, LocalDateTime]) = ???
 }
 
 @BindingAnnotation

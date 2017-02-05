@@ -9,5 +9,8 @@ trait TestDateTimeProvider {
     var dateTime = LocalDateTime.now()
 
     override def now: LocalDateTime = dateTime
+    def update = dateTime = LocalDateTime.now
   }
+
+  def nowDateTime = dateTimeProvider.now
 }

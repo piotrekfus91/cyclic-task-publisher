@@ -32,10 +32,8 @@ class StateSaverActor(@StateSerializer private val stateSerializer: ActorRef, fi
     case stateTask: StateTask =>
       state.tasks.find(it => it.user == stateTask.user && it.description == stateTask.description) match {
         case None => state = state.copy(tasks = state.tasks :+ stateTask)
-        case Some(existingStateTask) => existingStateTask.last = existingStateTask.last ++ stateTask.last
+        case Some(existingStateTask) => existingStateTask.last = stateTask.last
       }
-
-
   }
 }
 
