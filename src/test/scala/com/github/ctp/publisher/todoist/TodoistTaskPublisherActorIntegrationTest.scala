@@ -9,7 +9,7 @@ import com.github.ctp.publisher.{Publish, PublisherSequence}
 import com.github.ctp.publisher.todoist.service.ProjectListManager
 import com.github.ctp.test.TodoistIntegrationTestContext._
 import com.google.inject.Guice
-import org.scalatest.{BeforeAndAfterEach, FlatSpec, Matchers}
+import org.scalatest._
 
 class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers with BeforeAndAfterEach {
   val guice = Guice.createInjector(
@@ -30,17 +30,15 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
   val task = Task(taskName, todoistTestProject)
 
   override protected def beforeEach(): Unit = {
-    assume(todoistAvailable)
-
     createTestProject()
   }
 
-  "Todoist task publisher" should "create project" in {
+  "Todoist task publisher" should "create project" taggedAs TodoistMustBeAvailable in {
     projectListManager.refreshUserProjects(userData)
     projectListManager.getUserProjectByName(userData, todoistTestProject) shouldNot be(empty)
   }
 
-  it should "create task in real Todoist" in {
+  it should "create task in real Todoist" taggedAs TodoistMustBeAvailable in {
     todoistTaskPublisher ! Publish(userData, task, PublisherSequence(List()))
 
     actorSystem.stop(todoistTaskPublisher)
@@ -52,3 +50,5 @@ class TodoistTaskPublisherActorIntegrationTest extends FlatSpec with Matchers wi
     deleteTestProject()
   }
 }
+
+object TodoistMustBeAvailable extends Tag(if(todoistAvailable) "" else classOf[Ignore].getName)
