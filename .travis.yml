@@ -2,3 +2,4 @@ language: scala
 jdk: oraclejdk8
 scala:
   - "2.11.8"
+sbt_args: -DtodoistApiToken=92448233962bdd5a4eadd5a3c7b1816131408539

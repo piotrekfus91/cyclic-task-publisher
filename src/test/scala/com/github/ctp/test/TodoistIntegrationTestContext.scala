@@ -27,7 +27,7 @@ object TodoistIntegrationTestContext {
           |      "temp_id":"$projectId",
           |      "uuid":"$uuid",
           |      "args":{
-          |         "name":"CTP test project"
+          |         "name":"$todoistTestProject"
           |      }
           |   }
           |]
